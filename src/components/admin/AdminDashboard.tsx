@@ -1,0 +1,208 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, Users, Eye, TrendingUp, Plus, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
+import { useAuthContext } from '../../contexts/AuthContext';
+
+const AdminDashboard: React.FC = () => {
+  const { user, isSuperAdmin } = useAuthContext();
+  const [stats, setStats] = useState({
+    totalPosts: 0,
+    publishedPosts: 0,
+    draftPosts: 0,
+    totalViews: 0
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Get total posts
+      const { count: totalPosts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true });
+
+      // Get published posts
+      const { count: publishedPosts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'published');
+
+      // Get draft posts
+      const { count: draftPosts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'draft');
+
+      // Get total views
+      const { data: viewsData } = await supabase
+        .from('posts')
+        .select('views');
+
+      const totalViews = viewsData?.reduce((sum, post) => sum + (post.views || 0), 0) || 0;
+
+      setStats({
+        totalPosts: totalPosts || 0,
+        publishedPosts: publishedPosts || 0,
+        draftPosts: draftPosts || 0,
+        totalViews
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const statsCards = [
+    {
+      title: 'Total de Posts',
+      value: stats.totalPosts,
+      icon: FileText,
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20'
+    },
+    {
+      title: 'Posts Publicados',
+      value: stats.publishedPosts,
+      icon: Users,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20'
+    },
+    {
+      title: 'Rascunhos',
+      value: stats.draftPosts,
+      icon: FileText,
+      color: 'from-yellow-500 to-yellow-600',
+      bgColor: 'from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20'
+    },
+    {
+      title: 'Total de Visualizações',
+      value: stats.totalViews,
+      icon: Eye,
+      color: 'from-purple-500 to-purple-600',
+      bgColor: 'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20'
+    }
+  ];
+
+  return (
+    <div className="p-6 md:p-10">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
+              Painel Administrativo
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Bem-vindo, {user?.email}
+            </p>
+          </div>
+          
+          {isSuperAdmin && (
+            <div className="flex space-x-3 mt-4 md:mt-0">
+              <Link
+                to="/admin/posts/new"
+                className="inline-flex items-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Novo Post
+              </Link>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statsCards.map((card, index) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 bg-gradient-to-br ${card.color} rounded-xl flex items-center justify-center`}>
+                  <card.icon className="w-6 h-6 text-white" />
+                </div>
+                <TrendingUp className="w-5 h-5 text-gray-400" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                {card.value.toLocaleString()}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                {card.title}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700"
+        >
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 font-heading">
+            Ações Rápidas
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              to="/admin/posts"
+              className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  Gerenciar Posts
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Visualizar e editar posts
+                </p>
+              </div>
+            </Link>
+
+            {isSuperAdmin && (
+              <Link
+                to="/admin/posts/new"
+                className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              >
+                <Plus className="w-8 h-8 text-green-600 dark:text-green-400 mr-3" />
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Criar Post
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Escrever novo artigo
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            <div className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer">
+              <Settings className="w-8 h-8 text-purple-600 dark:text-purple-400 mr-3" />
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  Configurações
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Configurar o blog
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;

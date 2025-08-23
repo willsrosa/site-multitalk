@@ -1,0 +1,13 @@
+# Configurações de build para o Netlify
+[build]
+  # Comando para instalar dependências com yarn e construir o projeto
+  command = "yarn && yarn build"
+  # Diretório onde o site construído é salvo
+  publish = "dist"
+
+# Regra de redirecionamento para Single Page Applications (SPA)
+# Isso garante que o React Router funcione corretamente ao recarregar a página
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
