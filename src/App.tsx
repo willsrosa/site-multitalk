@@ -10,6 +10,7 @@ import WhatsAppButton from './components/WhatsAppButton';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminPosts from './components/admin/AdminPosts';
 import AdminPostForm from './components/admin/AdminPostForm';
+import AdminUsers from './components/admin/AdminUsers';
 import AdminLoginPage from './pages/AdminLoginPage';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminLayout from './components/admin/AdminLayout';
@@ -51,6 +52,7 @@ function App() {
                 
                 {/* Superadmin only routes */}
                 <Route element={<SuperAdminRoute />}>
+                  <Route path="usuarios" element={<AdminUsers />} />
                   <Route path="posts/new" element={<AdminPostForm />} />
                   <Route path="posts/edit/:id" element={<AdminPostForm />} />
                 </Route>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { KanbanStatus, Lead } from '../../../lib/supabase';
 import LeadCard from './LeadCard';
 import { motion } from 'framer-motion';
@@ -8,6 +7,7 @@ import { motion } from 'framer-motion';
 interface KanbanColumnProps {
   status: KanbanStatus;
   leads: Lead[];
+  onUpdate?: () => void;
 }
 
 const columnColors: Record<KanbanStatus, string> = {
@@ -18,8 +18,8 @@ const columnColors: Record<KanbanStatus, string> = {
   'Perca': 'border-red-500',
 };
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, leads }) => {
-  const { setNodeRef } = useDroppable({
+const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, leads, onUpdate }) => {
+  const { setNodeRef, isOver } = useDroppable({
     id: status,
   });
 
@@ -29,26 +29,40 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, leads }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       ref={setNodeRef}
-      className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex flex-col border-t-4 ${columnColors[status]}`}
+      className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 flex flex-col border-t-4 transition-all duration-200 min-w-[280px] sm:min-w-[320px] w-72 sm:w-80 flex-shrink-0 min-h-[500px] max-h-[calc(100vh-180px)] sm:max-h-[calc(100vh-200px)] relative ${columnColors[status]} ${
+        isOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-300 dark:ring-blue-600' : ''
+      }`}
     >
-      <div className="flex justify-between items-center mb-4 px-2">
-        <h2 className="font-bold text-lg text-gray-800 dark:text-gray-200">{status}</h2>
-        <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm font-semibold px-2 py-1 rounded-full">
+      <div className="flex justify-between items-center mb-3 sm:mb-4 px-1 sm:px-2">
+        <h2 className="font-bold text-base sm:text-lg text-gray-800 dark:text-gray-200 truncate pr-2">{status}</h2>
+        <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full flex-shrink-0">
           {leads.length}
         </span>
       </div>
-      <div className="flex-1 space-y-4 overflow-y-auto pr-2">
-        <SortableContext items={leads.map(lead => lead.id)} strategy={verticalListSortingStrategy}>
-          {leads.map(lead => (
-            <LeadCard key={lead.id} lead={lead} />
-          ))}
-          {leads.length === 0 && (
-            <div className="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
-              Nenhum lead nesta etapa.
-            </div>
-          )}
-        </SortableContext>
+      
+      {/* Conteúdo da coluna */}
+      <div className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden pr-2 min-h-[200px] kanban-column">
+        {leads.map(lead => (
+          <LeadCard key={lead.id} lead={lead} onUpdate={onUpdate} />
+        ))}
+        {leads.length === 0 && (
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
+            Nenhum lead nesta etapa.
+          </div>
+        )}
+        
+        {/* Área invisível para garantir que o drop funcione em qualquer lugar da coluna */}
+        <div className="min-h-[100px] w-full" />
       </div>
+      
+      {/* Overlay visual quando está sendo usado como drop zone */}
+      {isOver && (
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-100/30 to-blue-200/50 dark:from-blue-900/20 dark:to-blue-800/40 rounded-2xl border-2 border-dashed border-blue-400 dark:border-blue-500 flex items-center justify-center pointer-events-none z-10 animate-pulse">
+          <div className="text-blue-600 dark:text-blue-400 font-semibold text-sm bg-white/90 dark:bg-gray-800/90 px-4 py-2 rounded-full shadow-lg backdrop-blur-sm border border-blue-200 dark:border-blue-600">
+            ✨ Solte aqui
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

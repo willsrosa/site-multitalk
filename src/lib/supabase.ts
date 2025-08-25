@@ -62,6 +62,7 @@ export interface Profile {
   full_name?: string;
   avatar_url?: string;
   role: 'superadmin' | 'affiliate';
+  created_at: string;
   updated_at: string;
 }
 
@@ -69,11 +70,67 @@ export interface Lead {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   company?: string;
   message: string;
   status: KanbanStatus;
+  source?: string;
+  value?: number;
+  probability?: number;
+  expected_close_date?: string;
+  last_contact_date?: string;
+  next_follow_up?: string;
   profile_id: string;
   created_at: string;
   updated_at: string;
   profile?: Profile;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  due_date?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  lead_id?: string;
+  profile_id: string;
+  created_at: string;
+  updated_at: string;
+  lead?: Lead;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  lead_id?: string;
+  profile_id: string;
+  created_at: string;
+  updated_at: string;
+  lead?: Lead;
+}
+
+export interface Activity {
+  id: string;
+  type: 'call' | 'email' | 'meeting' | 'whatsapp' | 'other';
+  title: string;
+  description?: string;
+  duration?: number;
+  outcome?: string;
+  scheduled_at?: string;
+  completed_at?: string;
+  lead_id?: string;
+  profile_id: string;
+  created_at: string;
+  updated_at: string;
+  lead?: Lead;
+}
+
+export interface LeadCustomField {
+  id: string;
+  lead_id: string;
+  field_name: string;
+  field_value?: string;
+  created_at: string;
+  updated_at: string;
 }

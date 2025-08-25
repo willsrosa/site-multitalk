@@ -1,13 +1,15 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, LogOut, ExternalLink, Trello, User } from 'lucide-react';
+import { LayoutDashboard, FileText, LogOut, ExternalLink, Trello, User, Users } from 'lucide-react';
 import Logo from '../Logo';
 import { supabase } from '../../lib/supabase';
+import { useAuthContext } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const AdminLayout: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { isSuperAdmin } = useAuthContext();
 
     const handleLogout = async () => {
         try {
@@ -24,6 +26,7 @@ const AdminLayout: React.FC = () => {
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
         { name: 'Kanban', href: '/admin/kanban', icon: Trello },
         { name: 'Posts', href: '/admin/posts', icon: FileText },
+        ...(isSuperAdmin ? [{ name: 'Usuários', href: '/admin/usuarios', icon: Users }] : []),
         { name: 'Meu Perfil', href: '/admin/perfil', icon: User },
     ];
 
