@@ -8,10 +8,10 @@ import { useAuthContext } from '../../contexts/AuthContext';
 const AdminDashboard: React.FC = () => {
   const { user, isSuperAdmin } = useAuthContext();
   const [stats, setStats] = useState({
-    totalPosts: 0,
-    publishedPosts: 0,
-    draftPosts: 0,
-    totalViews: 0
+    totalLeads: 0,
+    newLeads: 0,
+    wonLeads: 0,
+    totalValue: 0
   });
 
   useEffect(() => {
@@ -20,35 +20,36 @@ const AdminDashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      // Get total posts
-      const { count: totalPosts } = await supabase
-        .from('posts')
+      // Get total leads
+      const { count: totalLeads } = await supabase
+        .from('leads')
         .select('*', { count: 'exact', head: true });
 
-      // Get published posts
-      const { count: publishedPosts } = await supabase
-        .from('posts')
+      // Get new leads
+      const { count: newLeads } = await supabase
+        .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'published');
+        .eq('status', 'Nova Lead');
 
-      // Get draft posts
-      const { count: draftPosts } = await supabase
-        .from('posts')
+      // Get won leads
+      const { count: wonLeads } = await supabase
+        .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'draft');
+        .eq('status', 'Ganho');
 
-      // Get total views
-      const { data: viewsData } = await supabase
-        .from('posts')
-        .select('views');
+      // Get total value from won leads
+      const { data: valueData } = await supabase
+        .from('leads')
+        .select('value')
+        .eq('status', 'Ganho');
 
-      const totalViews = viewsData?.reduce((sum, post) => sum + (post.views || 0), 0) || 0;
+      const totalValue = valueData?.reduce((sum, lead) => sum + (lead.value || 0), 0) || 0;
 
       setStats({
-        totalPosts: totalPosts || 0,
-        publishedPosts: publishedPosts || 0,
-        draftPosts: draftPosts || 0,
-        totalViews
+        totalLeads: totalLeads || 0,
+        newLeads: newLeads || 0,
+        wonLeads: wonLeads || 0,
+        totalValue
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -57,32 +58,33 @@ const AdminDashboard: React.FC = () => {
 
   const statsCards = [
     {
-      title: 'Total de Posts',
-      value: stats.totalPosts,
-      icon: FileText,
+      title: 'Total de Leads',
+      value: stats.totalLeads,
+      icon: Users,
       color: 'from-blue-500 to-blue-600',
       bgColor: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20'
     },
     {
-      title: 'Posts Publicados',
-      value: stats.publishedPosts,
-      icon: Users,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20'
-    },
-    {
-      title: 'Rascunhos',
-      value: stats.draftPosts,
+      title: 'Novas Leads',
+      value: stats.newLeads,
       icon: FileText,
       color: 'from-yellow-500 to-yellow-600',
       bgColor: 'from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20'
     },
     {
-      title: 'Total de Visualizações',
-      value: stats.totalViews,
+      title: 'Leads Ganhas',
+      value: stats.wonLeads,
+      icon: TrendingUp,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20'
+    },
+    {
+      title: 'Valor Total Ganho',
+      value: `R$ ${stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: Eye,
       color: 'from-purple-500 to-purple-600',
-      bgColor: 'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20'
+      bgColor: 'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20',
+      isValue: true
     }
   ];
 
@@ -134,7 +136,7 @@ const AdminDashboard: React.FC = () => {
                 <TrendingUp className="w-5 h-5 text-gray-400" />
               </div>
               <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                {card.value.toLocaleString()}
+                {card.isValue ? card.value : card.value.toLocaleString()}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 {card.title}
@@ -156,10 +158,25 @@ const AdminDashboard: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
+              to="/admin/kanban"
+              className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              <Users className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  Kanban de Leads
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Gerenciar pipeline de vendas
+                </p>
+              </div>
+            </Link>
+
+            <Link
               to="/admin/posts"
               className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             >
-              <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
+              <FileText className="w-8 h-8 text-green-600 dark:text-green-400 mr-3" />
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">
                   Gerenciar Posts
@@ -169,23 +186,6 @@ const AdminDashboard: React.FC = () => {
                 </p>
               </div>
             </Link>
-
-            {isSuperAdmin && (
-              <Link
-                to="/admin/posts/new"
-                className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-              >
-                <Plus className="w-8 h-8 text-green-600 dark:text-green-400 mr-3" />
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Criar Post
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Escrever novo artigo
-                  </p>
-                </div>
-              </Link>
-            )}
 
             <div className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer">
               <Settings className="w-8 h-8 text-purple-600 dark:text-purple-400 mr-3" />

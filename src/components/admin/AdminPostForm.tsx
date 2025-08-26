@@ -2,26 +2,37 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { supabase, Category, Author, BlogPost } from '../../lib/supabase';
+import { supabase, Category, Author } from '../../lib/supabase';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Upload, X } from 'lucide-react';
 
-const schema = yup.object().shape({
+type FormData = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  category_id: string;
+  author_id: string;
+  status: 'draft' | 'published' | 'archived';
+  featured_image?: string | null;
+  read_time: number;
+  featured: boolean;
+};
+
+const schema: yup.ObjectSchema<FormData> = yup.object().shape({
   title: yup.string().required('O título é obrigatório'),
   slug: yup.string().required('O slug é obrigatório').matches(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hifens'),
   excerpt: yup.string().required('O resumo é obrigatório').max(300, 'Máximo de 300 caracteres'),
   content: yup.string().required('O conteúdo é obrigatório'),
   category_id: yup.string().required('A categoria é obrigatória'),
   author_id: yup.string().required('O autor é obrigatório'),
-  status: yup.string().oneOf(['draft', 'published', 'archived']).required('O status é obrigatório'),
-  featured_image: yup.string().url('Deve ser uma URL válida').nullable(),
-  read_time: yup.number().typeError('Deve ser um número').min(1, 'Deve ser no mínimo 1').required('O tempo de leitura é obrigatório'),
+  status: yup.mixed<'draft' | 'published' | 'archived'>().oneOf(['draft', 'published', 'archived']).required('O status é obrigatório'),
+  featured_image: yup.string().nullable().notRequired().transform((value) => value === '' ? null : value),
+  read_time: yup.number().required('O tempo de leitura é obrigatório').min(1, 'Deve ser no mínimo 1'),
   featured: yup.boolean().required(),
-});
-
-type FormData = Omit<BlogPost, 'id' | 'created_at' | 'updated_at' | 'views' | 'published_at' | 'author' | 'category'>;
+}) as yup.ObjectSchema<FormData>;
 
 const AdminPostForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +42,8 @@ const AdminPostForm: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const { control, handleSubmit, register, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema),
@@ -41,8 +54,8 @@ const AdminPostForm: React.FC = () => {
       content: '',
       category_id: '',
       author_id: '',
-      status: 'draft',
-      featured_image: '',
+      status: 'draft' as const,
+      featured_image: null,
       read_time: 5,
       featured: false,
     }
@@ -94,6 +107,7 @@ const AdminPostForm: React.FC = () => {
                 setValue(key, postData[key]);
               }
             });
+            setImagePreview(postData.featured_image || '');
           }
         }
       } catch (error) {
@@ -105,6 +119,58 @@ const AdminPostForm: React.FC = () => {
     };
     fetchData();
   }, [id, setValue, control]);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione apenas arquivos de imagem.');
+      return;
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      // Gerar nome único para o arquivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `posts/${fileName}`;
+
+      // Upload para o bucket 'arquivos'
+      const { error } = await supabase.storage
+        .from('arquivos')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('arquivos')
+        .getPublicUrl(filePath);
+
+      // Atualizar o formulário e preview
+      setValue('featured_image', publicUrl);
+      setImagePreview(publicUrl);
+      toast.success('Imagem enviada com sucesso!');
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast.error('Erro ao enviar imagem: ' + error.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setValue('featured_image', null);
+    setImagePreview('');
+  };
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -155,7 +221,7 @@ const AdminPostForm: React.FC = () => {
               {isEditMode ? 'Editar Post' : 'Criar Novo Post'}
             </h1>
           </div>
-          
+
           <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -183,11 +249,55 @@ const AdminPostForm: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="featured_image" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">URL da Imagem de Destaque</label>
-              <input {...register('featured_image')} id="featured_image" type="url" className={inputClass} />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Imagem de Destaque</label>
+
+              {imagePreview ? (
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className={`cursor-pointer flex flex-col items-center space-y-2 ${uploadingImage ? 'opacity-50' : ''}`}
+                  >
+                    {uploadingImage ? (
+                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    ) : (
+                      <Upload className="w-8 h-8 text-gray-400" />
+                    )}
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {uploadingImage ? 'Enviando...' : 'Clique para enviar uma imagem'}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500">
+                      PNG, JPG, GIF até 5MB
+                    </span>
+                  </label>
+                </div>
+              )}
+
               {errors.featured_image && <p className="text-red-500 text-sm mt-1">{errors.featured_image.message}</p>}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="category_id" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Categoria</label>
