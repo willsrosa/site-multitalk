@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, Building, Clock, MessageSquare, User, Edit, Trash2, Save, Settings, DollarSign, Calendar, Phone } from 'lucide-react';
-import { Lead, KanbanStatus, supabase } from '../../../lib/supabase';
+import { Lead, KanbanStatus, LeadCustomField, supabase } from '../../../lib/supabase';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import CustomFieldsModal from './CustomFieldsModal';
@@ -17,6 +17,31 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCustomFields, setShowCustomFields] = useState(false);
+  const [customFields, setCustomFields] = useState<LeadCustomField[]>([]);
+
+  // Buscar campos personalizados
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!isOpen) return;
+      
+      try {
+        console.log('Buscando campos personalizados para lead:', lead.id);
+        const { data, error } = await supabase
+          .from('lead_custom_fields')
+          .select('*')
+          .eq('lead_id', lead.id);
+
+        if (error) throw error;
+        console.log('Campos personalizados encontrados:', data);
+        setCustomFields(data || []);
+        console.log('Estado customFields atualizado para:', data || []);
+      } catch (error) {
+        console.error('Erro ao buscar campos personalizados:', error);
+      }
+    };
+
+    fetchCustomFields();
+  }, [lead.id, isOpen]);
 
   // Debug log
   React.useEffect(() => {
@@ -315,6 +340,17 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
                         </div>
                       </div>
                     )}
+
+                    {/* Campos Personalizados na primeira coluna */}
+                    {customFields.slice(0, Math.ceil(customFields.length / 2)).map((field) => (
+                      <div key={field.id} className="flex items-center space-x-3">
+                        <Settings className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        <div>
+                          <p className="text-sm text-purple-600 dark:text-purple-400 capitalize">{field.field_name}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{field.field_value}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   <div className="space-y-4">
@@ -371,8 +407,21 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
                         </p>
                       </div>
                     </div>
+
+                    {/* Campos Personalizados na segunda coluna */}
+                    {customFields.slice(Math.ceil(customFields.length / 2)).map((field) => (
+                      <div key={field.id} className="flex items-center space-x-3">
+                        <Settings className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        <div>
+                          <p className="text-sm text-purple-600 dark:text-purple-400 capitalize">{field.field_name}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{field.field_value}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <div className="flex items-start space-x-3">

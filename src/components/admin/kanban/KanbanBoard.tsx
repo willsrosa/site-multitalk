@@ -248,19 +248,22 @@ const KanbanBoard: React.FC = () => {
       </motion.div>
 
       <DndContext sensors={sensors} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6 pb-4 kanban-grid">
-          {KANBAN_COLUMNS.map((status) => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              leads={leadsByStatus[status]}
-              onUpdate={fetchLeads}
-              onQuickAdd={() => {
-                setQuickAddStatus(status);
-                setShowQuickAddModal(true);
-              }}
-            />
-          ))}
+        <div className="flex-1 overflow-x-auto kanban-horizontal-scroll">
+          <div className="flex gap-6 pb-4 min-w-max" style={{ minWidth: '1400px' }}>
+            {KANBAN_COLUMNS.map((status) => (
+              <div key={status} className="flex-shrink-0" style={{ width: '280px' }}>
+                <KanbanColumn
+                  status={status}
+                  leads={leadsByStatus[status]}
+                  onUpdate={fetchLeads}
+                  onQuickAdd={() => {
+                    setQuickAddStatus(status);
+                    setShowQuickAddModal(true);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </DndContext>
 
