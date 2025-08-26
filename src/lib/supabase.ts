@@ -61,6 +61,7 @@ export interface Profile {
   username: string;
   full_name?: string;
   avatar_url?: string;
+  whatsapp?: string;
   role: 'superadmin' | 'affiliate';
   created_at: string;
   updated_at: string;

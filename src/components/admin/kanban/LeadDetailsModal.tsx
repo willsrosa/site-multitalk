@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Building, Clock, MessageSquare, User, Edit, Trash2, Save } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Mail, Building, Clock, MessageSquare, User, Edit, Trash2, Save, Settings, DollarSign, Calendar, Phone } from 'lucide-react';
 import { Lead, KanbanStatus, supabase } from '../../../lib/supabase';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import CustomFieldsModal from './CustomFieldsModal';
 
 interface LeadDetailsModalProps {
   lead: Lead;
@@ -15,6 +16,20 @@ interface LeadDetailsModalProps {
 const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClose, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showCustomFields, setShowCustomFields] = useState(false);
+
+  // Debug log
+  React.useEffect(() => {
+    console.log('Modal state changed:', { isOpen, leadName: lead.name });
+    if (isOpen) {
+      console.log('Modal should be visible now!');
+      // Force a small delay to ensure DOM is ready
+      setTimeout(() => {
+        const modalElement = document.querySelector('[data-modal-content]');
+        console.log('Modal element found:', !!modalElement);
+      }, 100);
+    }
+  }, [isOpen, lead.name]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
@@ -95,24 +110,20 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
     }
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={handleClose}
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 w-full max-w-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto mx-4"
-          >
+  if (!isOpen) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ zIndex: 99999 }}>
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      
+      <div
+        data-modal-content
+        className="relative bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 w-full max-w-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto mx-4"
+        style={{ zIndex: 100000 }}
+      >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
@@ -127,6 +138,13 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
               <div className="flex items-center space-x-2">
                 {!isEditing && (
                   <>
+                    <button
+                      onClick={() => setShowCustomFields(true)}
+                      className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                      title="Campos Personalizados"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </button>
                     <button
                       onClick={() => setIsEditing(true)}
                       className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -268,6 +286,16 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
                       </div>
                     </div>
 
+                    {lead.phone && (
+                      <div className="flex items-center space-x-3">
+                        <Phone className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Telefone</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{lead.phone}</p>
+                        </div>
+                      </div>
+                    )}
+
                     {lead.company && (
                       <div className="flex items-center space-x-3">
                         <Building className="w-5 h-5 text-gray-400" />
@@ -277,9 +305,53 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
                         </div>
                       </div>
                     )}
+
+                    {lead.source && (
+                      <div className="flex items-center space-x-3">
+                        <span className="w-5 h-5 text-gray-400 text-center">🔗</span>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Fonte</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{lead.source}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4">
+                    {lead.value && (
+                      <div className="flex items-center space-x-3">
+                        <DollarSign className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Valor Estimado</p>
+                          <p className="font-semibold text-green-600 dark:text-green-400">
+                            R$ {parseFloat(lead.value.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {lead.probability !== undefined && lead.probability > 0 && (
+                      <div className="flex items-center space-x-3">
+                        <span className="w-5 h-5 text-gray-400 text-center">%</span>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Probabilidade</p>
+                          <p className="font-semibold text-blue-600 dark:text-blue-400">{lead.probability}%</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {lead.expected_close_date && (
+                      <div className="flex items-center space-x-3">
+                        <Calendar className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Data Esperada</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            {new Date(lead.expected_close_date).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center space-x-3">
                       <Clock className="w-5 h-5 text-gray-400" />
                       <div>
@@ -315,11 +387,22 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ lead, isOpen, onClo
                 </div>
               </div>
             )}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+
+            {/* Modal de Campos Personalizados */}
+            <CustomFieldsModal
+              isOpen={showCustomFields}
+              onClose={() => setShowCustomFields(false)}
+              leadId={lead.id}
+              onUpdate={onUpdate}
+            />
+      </div>
+    </div>
   );
+
+  // Render modal in a portal to ensure it's on top
+  return typeof document !== 'undefined' 
+    ? createPortal(modalContent, document.body)
+    : null;
 };
 
 export default LeadDetailsModal;

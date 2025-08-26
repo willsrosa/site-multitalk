@@ -3,11 +3,13 @@ import { useDroppable } from '@dnd-kit/core';
 import { KanbanStatus, Lead } from '../../../lib/supabase';
 import LeadCard from './LeadCard';
 import { motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
 
 interface KanbanColumnProps {
   status: KanbanStatus;
   leads: Lead[];
   onUpdate?: () => void;
+  onQuickAdd?: () => void;
 }
 
 const columnColors: Record<KanbanStatus, string> = {
@@ -18,7 +20,7 @@ const columnColors: Record<KanbanStatus, string> = {
   'Perca': 'border-red-500',
 };
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, leads, onUpdate }) => {
+const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, leads, onUpdate, onQuickAdd }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
   });
@@ -29,15 +31,45 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, leads, onUpdate }) 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       ref={setNodeRef}
-      className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 flex flex-col border-t-4 transition-all duration-200 min-w-[280px] sm:min-w-[320px] w-72 sm:w-80 flex-shrink-0 min-h-[500px] max-h-[calc(100vh-180px)] sm:max-h-[calc(100vh-200px)] relative ${columnColors[status]} ${
+      className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 flex flex-col border-t-4 transition-all duration-200 w-full min-h-[600px] max-h-[calc(100vh-180px)] sm:max-h-[calc(100vh-200px)] relative ${columnColors[status]} ${
         isOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-300 dark:ring-blue-600' : ''
       }`}
     >
-      <div className="flex justify-between items-center mb-3 sm:mb-4 px-1 sm:px-2">
-        <h2 className="font-bold text-base sm:text-lg text-gray-800 dark:text-gray-200 truncate pr-2">{status}</h2>
-        <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full flex-shrink-0">
-          {leads.length}
-        </span>
+      <div className="flex flex-col mb-3 sm:mb-4 px-1 sm:px-2">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-bold text-base sm:text-lg text-gray-800 dark:text-gray-200 truncate pr-2">{status}</h2>
+          <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full flex-shrink-0">
+            {leads.length}
+          </span>
+        </div>
+        
+        {/* Resumo de valores - compacto */}
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 border border-green-200 dark:border-green-700">
+          <div className="text-center">
+            <div className="text-sm font-bold text-green-700 dark:text-green-300">
+              R$ {leads
+                .filter(lead => lead.value && lead.value > 0)
+                .reduce((sum, lead) => sum + parseFloat(lead.value!.toString()), 0)
+                .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-xs text-green-600 dark:text-green-400">
+              {leads.filter(lead => lead.value && lead.value > 0).length} de {leads.length} com valor
+            </div>
+          </div>
+        </div>
+        
+        {/* Área de drop para adicionar leads */}
+        {onQuickAdd && (
+          <div className="mt-3 px-2">
+            <div
+              onClick={onQuickAdd}
+              className="w-full flex items-center justify-center gap-2 py-3 px-3 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/20 dark:hover:to-blue-800/20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200 cursor-pointer group"
+            >
+              <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <span className="font-medium">Novo Lead</span>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Conteúdo da coluna */}

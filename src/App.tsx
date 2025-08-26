@@ -18,6 +18,7 @@ import { Toaster } from 'react-hot-toast';
 import BlogPostPage from './pages/BlogPostPage';
 import ScrollToTop from './components/ScrollToTop';
 import AffiliatePage from './pages/AffiliatePage';
+import SalesPage from './pages/SalesPage';
 import KanbanBoard from './components/admin/kanban/KanbanBoard';
 import ProfilePage from './components/admin/ProfilePage';
 import SuperAdminRoute from './components/admin/SuperAdminRoute';
@@ -59,12 +60,14 @@ function App() {
               </Route>
             </Route>
 
+            {/* Sales Page Route (without layout) */}
+            <Route path="/parceiro/:slug" element={<SalesPage />} />
+
             {/* Public Routes */}
             <Route path="/" element={<PublicLayout />}>
               <Route index element={<Home />} />
               <Route path="blog" element={<Blog />} />
               <Route path="blog/:slug" element={<BlogPostPage />} />
-              <Route path="v/:slug" element={<AffiliatePage />} />
               {/* Redirect any other public path to home */}
               <Route path="*" element={<Home />} />
             </Route>

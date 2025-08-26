@@ -3,6 +3,7 @@ import { DndContext, DragEndEvent, PointerSensor, TouchSensor, useSensor, useSen
 import { KanbanStatus, Lead, supabase } from '../../../lib/supabase';
 import KanbanColumn from './KanbanColumn';
 import CreateLeadModal from '../CreateLeadModal';
+import QuickAddLeadModal from './QuickAddLeadModal';
 import toast from 'react-hot-toast';
 import { Loader2, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -15,6 +16,8 @@ const KanbanBoard: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [quickAddStatus, setQuickAddStatus] = useState<KanbanStatus>('Nova Lead');
 
   // Verificar sessão do usuário
   useEffect(() => {
@@ -245,17 +248,19 @@ const KanbanBoard: React.FC = () => {
       </motion.div>
 
       <DndContext sensors={sensors} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-        <div className="flex-1 flex gap-6 pb-4 overflow-x-auto overflow-y-hidden kanban-container">
-          <div className="flex gap-6 min-w-max">
-            {KANBAN_COLUMNS.map((status) => (
-              <KanbanColumn
-                key={status}
-                status={status}
-                leads={leadsByStatus[status]}
-                onUpdate={fetchLeads}
-              />
-            ))}
-          </div>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6 pb-4 kanban-grid">
+          {KANBAN_COLUMNS.map((status) => (
+            <KanbanColumn
+              key={status}
+              status={status}
+              leads={leadsByStatus[status]}
+              onUpdate={fetchLeads}
+              onQuickAdd={() => {
+                setQuickAddStatus(status);
+                setShowQuickAddModal(true);
+              }}
+            />
+          ))}
         </div>
       </DndContext>
 
@@ -264,6 +269,14 @@ const KanbanBoard: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onLeadCreated={fetchLeads}
+      />
+
+      {/* Quick Add Lead Modal */}
+      <QuickAddLeadModal
+        isOpen={showQuickAddModal}
+        onClose={() => setShowQuickAddModal(false)}
+        onLeadCreated={fetchLeads}
+        initialStatus={quickAddStatus}
       />
     </div>
   );

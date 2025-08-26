@@ -7,6 +7,7 @@ interface AuthContextType {
   profile: Profile | null;
   isSuperAdmin: boolean;
   loading: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,7 +58,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const isSuperAdmin = profile?.role === 'superadmin';
 
-  const value = { user, profile, isSuperAdmin, loading };
+  const refreshProfile = async () => {
+    if (user) {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error refreshing profile:", error);
+      } else {
+        setProfile(profileData);
+      }
+    }
+  };
+
+  const value = { user, profile, isSuperAdmin, loading, refreshProfile };
 
   return (
     <AuthContext.Provider value={value}>
