@@ -1,25 +1,32 @@
 import React from 'react';
 
-const Logo: React.FC = () => {
-  // O caminho agora aponta para o arquivo na pasta /public
-  // Certifique-se de que o arquivo 'logo.png' existe na pasta 'public'.
-  const localLogoPath = "/logo.png"; 
+interface LogoProps {
+  collapsed?: boolean;
+  isAdmin?: boolean;
+}
+
+const Logo: React.FC<LogoProps> = ({ collapsed = false, isAdmin = false }) => {
+  const logoPath = "/logo.png";
+  
+  // Se estiver no admin e colapsado, não mostra a logo
+  if (isAdmin && collapsed) {
+    return null;
+  }
   
   return (
     <div className="flex items-center">
-      {/* Logo para o Tema Claro (forçado para preto com filtro CSS) */}
       <img 
-        src={localLogoPath} 
+        src={logoPath} 
         alt="Multi Talk" 
-        className="h-8 md:h-10 w-auto block dark:hidden filter-[grayscale(1)_brightness(0)]"
-        onError={(e) => (e.currentTarget.style.display = 'none')}
-      />
-      {/* Logo para o Tema Escuro (original, assumindo que seja branca) */}
-      <img 
-        src={localLogoPath} 
-        alt="Multi Talk" 
-        className="h-8 md:h-10 w-auto hidden dark:block"
-        onError={(e) => (e.currentTarget.style.display = 'none')}
+        className={`w-auto transition-all duration-300 ${
+          isAdmin 
+            ? 'h-8' // Menor no admin
+            : 'h-12 md:h-14' // Tamanho normal no site
+        }`}
+        onError={(e) => {
+          console.error('Erro ao carregar logo:', e);
+          e.currentTarget.style.display = 'none';
+        }}
       />
     </div>
   );

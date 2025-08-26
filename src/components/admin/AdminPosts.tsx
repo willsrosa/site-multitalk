@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Trash2, Eye, Plus, Search, Filter } from 'lucide-react';
+import { Edit, Trash2, Eye, Plus, Search, Filter, ShieldX, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase, BlogPost } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 const AdminPosts: React.FC = () => {
-  const { isSuperAdmin } = useAuthContext();
+  const { isSuperAdmin, loading: authLoading } = useAuthContext();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,14 +68,43 @@ const AdminPosts: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Carregando posts...</p>
+            <p className="text-gray-600 dark:text-gray-400">Carregando...</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="p-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-8"
+          >
+            <ShieldX className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-red-700 dark:text-red-400 mb-2">
+              Acesso Restrito
+            </h1>
+            <p className="text-red-600 dark:text-red-300 mb-6">
+              Apenas superadministradores podem gerenciar posts do blog.
+            </p>
+            <Link 
+              to="/admin" 
+              className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Dashboard
+            </Link>
+          </motion.div>
         </div>
       </div>
     );

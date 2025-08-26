@@ -156,7 +156,7 @@ const AdminDashboard: React.FC = () => {
             Ações Rápidas
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 ${isSuperAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             <Link
               to="/admin/kanban"
               className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -173,31 +173,36 @@ const AdminDashboard: React.FC = () => {
             </Link>
 
             <Link
-              to="/admin/posts"
+              to="/admin/perfil"
               className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             >
-              <FileText className="w-8 h-8 text-green-600 dark:text-green-400 mr-3" />
+              <Settings className="w-8 h-8 text-purple-600 dark:text-purple-400 mr-3" />
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Gerenciar Posts
+                  Meu Perfil
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Visualizar e editar posts
+                  Gerenciar perfil e configurações
                 </p>
               </div>
             </Link>
 
-            <div className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer">
-              <Settings className="w-8 h-8 text-purple-600 dark:text-purple-400 mr-3" />
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Configurações
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Configurar o blog
-                </p>
-              </div>
-            </div>
+            {isSuperAdmin && (
+              <Link
+                to="/admin/posts"
+                className="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              >
+                <FileText className="w-8 h-8 text-green-600 dark:text-green-400 mr-3" />
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Gerenciar Posts
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Visualizar e editar posts do blog
+                  </p>
+                </div>
+              </Link>
+            )}
           </div>
         </motion.div>
       </div>

@@ -6,7 +6,8 @@ import { supabase, Category, Author } from '../../lib/supabase';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Loader2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Upload, X, ShieldX } from 'lucide-react';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 type FormData = {
   title: string;
@@ -37,6 +38,7 @@ const schema: yup.ObjectSchema<FormData> = yup.object().shape({
 const AdminPostForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isSuperAdmin, loading: authLoading } = useAuthContext();
   const isEditMode = Boolean(id);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -197,11 +199,40 @@ const AdminPostForm: React.FC = () => {
     }
   };
 
-  if (pageLoading) {
+  if (authLoading || pageLoading) {
     return (
       <div className="p-6 text-center">
         <Loader2 className="animate-spin h-8 w-8 mx-auto text-blue-600" />
-        <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando formulário...</p>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="p-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-8"
+          >
+            <ShieldX className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-red-700 dark:text-red-400 mb-2">
+              Acesso Restrito
+            </h1>
+            <p className="text-red-600 dark:text-red-300 mb-6">
+              Apenas superadministradores podem gerenciar posts do blog.
+            </p>
+            <Link
+              to="/admin"
+              className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Dashboard
+            </Link>
+          </motion.div>
+        </div>
       </div>
     );
   }

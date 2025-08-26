@@ -41,7 +41,7 @@ const AdminLogin: React.FC = () => {
       >
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <Logo />
+            <Logo isAdmin={true} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
             Painel Admin
