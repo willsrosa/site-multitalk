@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, User, Mail, Copy, ShieldCheck, Edit, Save, X, MessageCircle } from 'lucide-react';
+import { Loader2, Mail, Copy, ShieldCheck, Edit, Save, X, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -14,13 +14,7 @@ const ProfilePage: React.FC = () => {
     whatsapp: profile?.whatsapp || ''
   });
 
-  const affiliateLink = `${window.location.origin}/v/${profile?.username}`;
   const salesLink = `${window.location.origin}/parceiro/${profile?.username}`;
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(affiliateLink);
-    toast.success('Link de afiliado copiado!');
-  };
 
   const handleCopySalesLink = () => {
     navigator.clipboard.writeText(salesLink);
@@ -209,28 +203,7 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
-                  Link de Afiliado (Página Original)
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Link para a página original com header e footer.
-                </p>
-                <div className="flex items-center space-x-3">
-                  <div className="flex-1 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <p className="text-green-600 dark:text-green-400 font-mono truncate">
-                      {affiliateLink}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={handleCopyLink}
-                    className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    aria-label="Copiar link de afiliado"
-                  >
-                    <Copy className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+
             </div>
           </div>
         </motion.div>

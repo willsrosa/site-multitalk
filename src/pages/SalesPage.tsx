@@ -5,6 +5,7 @@ import { Mail, MessageCircle, Star, CheckCircle, ArrowRight, Loader2, Play, Zap,
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Logo from '../components/Logo';
+import PartnerWhatsAppButton from '../components/PartnerWhatsAppButton';
 
 interface SalesPageProps {}
 
@@ -184,7 +185,7 @@ const SalesPage: React.FC<SalesPageProps> = () => {
               className="inline-flex items-center px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white mb-8"
             >
               <Zap className="w-5 h-5 mr-2 text-yellow-400" />
-              <span className="font-semibold">Especialista em {affiliate.full_name || 'Soluções Digitais'}</span>
+              <span className="font-semibold">A Melhor Plataforma Omnichannel do Brasil</span>
             </motion.div>
 
             <motion.h1 
@@ -493,6 +494,12 @@ const SalesPage: React.FC<SalesPageProps> = () => {
           </div>
         </section>
       )}
+
+      {/* Partner WhatsApp Button */}
+      <PartnerWhatsAppButton 
+        whatsapp={affiliate.whatsapp || ''} 
+        partnerName={affiliate.full_name || undefined}
+      />
     </div>
   );
 };
